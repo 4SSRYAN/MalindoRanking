@@ -20,6 +20,26 @@ const ROLE_MAP = {
 const API_KEY = process.env.API_KEY;
 const GROUP_ID = Number(process.env.GROUP_ID);
 
+console.log("Starting server with config:");
+console.log("API_KEY loaded:", API_KEY ? "YES" : "NO");
+console.log("GROUP_ID:", GROUP_ID);
+
+async function isUserInGroup(userId) {
+  try {
+    console.log(`[CheckMembership] Checking if UserId ${userId} is in group ${GROUP_ID}`);
+    const res = await axios.get(
+      `https://groups.roblox.com/v1/users/${userId}/groups/roles`
+    );
+    const groups = res.data.data;
+    const inGroup = groups.some((g) => g.group.id === GROUP_ID);
+    console.log(`[CheckMembership] UserId ${userId} in group: ${inGroup}`);
+    return inGroup;
+  } catch (error) {
+    console.error("[CheckMembership] Error checking group membership:", error.message);
+    return false;
+  }
+}
+
 async function promoteUser(roleName, userId, res) {
   if (!userId) {
     console.log("[Promote] Missing UserId");
@@ -33,6 +53,12 @@ async function promoteUser(roleName, userId, res) {
 
   const TARGET_ROLE_ID = ROLE_MAP[roleName];
   console.log(`[Promote] Attempting to promote UserId: ${userId} to role ${roleName} (ID: ${TARGET_ROLE_ID}) in group ${GROUP_ID}`);
+
+  const inGroup = await isUserInGroup(userId);
+  if (!inGroup) {
+    console.log(`[Promote] UserId ${userId} is not a member of the group ${GROUP_ID}`);
+    return res.status(400).send("User not in group");
+  }
 
   try {
     const response = await axios.post(
@@ -53,7 +79,7 @@ async function promoteUser(roleName, userId, res) {
   } catch (error) {
     console.error("[Promote] Promotion error status:", error.response?.status);
     console.error("[Promote] Promotion error data:", error.response?.data);
-    console.error("[Promote] Full error:", error.message);
+    console.error("[Promote] Full error message:", error.message);
     res.status(500).send("Promotion failed");
   }
 }
