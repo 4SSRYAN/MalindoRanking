@@ -3,7 +3,7 @@ const axios = require("axios");
 // Load these from environment variables for security
 const API_KEY = process.env.API_KEY;
 const GROUP_ID = Number(process.env.GROUP_ID);
-const TARGET_ROLE_ID = Number(process.env.TARGET_ROLE_ID);
+const TARGETROLE_BC = Number(process.env.TARGETROLE_BC);
 
 /**
  * Promote a user in the Roblox group
@@ -13,7 +13,7 @@ async function promoteUser(userId) {
   try {
     const response = await axios.post(
       `https://groups.roblox.com/v1/groups/${GROUP_ID}/users/${userId}/roles`,
-      { roleId: TARGET_ROLE_ID },
+      { roleId: TARGETROLE_BC },
       {
         headers: {
           "x-api-key": API_KEY,
@@ -21,7 +21,7 @@ async function promoteUser(userId) {
         },
       }
     );
-    console.log(`Successfully promoted user ${userId} to role ${TARGET_ROLE_ID}`);
+    console.log(`Successfully promoted user ${userId} to role ${TARGETROLE_BC}`);
     return true;
   } catch (error) {
     console.error(
