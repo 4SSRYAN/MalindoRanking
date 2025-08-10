@@ -4,7 +4,6 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-// Map your roles (lowercase) to their Roblox role IDs
 const ROLE_MAP = {
   businessclass: 92111032,
   economyclass: 82297264,
@@ -18,16 +17,12 @@ const ROLE_MAP = {
   holder: 82297261,
 };
 
-// Your group ID and API key from env
 const API_KEY = process.env.API_KEY;
 const GROUP_ID = Number(process.env.GROUP_ID);
 
-app.post("/promote/:roleName", async (req, res) => {
-  const roleName = req.params.roleName.toLowerCase();
-  const { UserId } = req.body;
-
-  if (!UserId) {
-    console.log("[Promote] Missing UserId in request body");
+async function promoteUser(roleName, userId, res) {
+  if (!userId) {
+    console.log("[Promote] Missing UserId");
     return res.status(400).send("Missing UserId");
   }
 
@@ -37,12 +32,11 @@ app.post("/promote/:roleName", async (req, res) => {
   }
 
   const TARGET_ROLE_ID = ROLE_MAP[roleName];
-
-  console.log(`[Promote] Attempting to promote UserId: ${UserId} to role ${roleName} (ID: ${TARGET_ROLE_ID}) in group ${GROUP_ID}`);
+  console.log(`[Promote] Attempting to promote UserId: ${userId} to role ${roleName} (ID: ${TARGET_ROLE_ID}) in group ${GROUP_ID}`);
 
   try {
     const response = await axios.post(
-      `https://groups.roblox.com/v1/groups/${GROUP_ID}/users/${UserId}/roles`,
+      `https://groups.roblox.com/v1/groups/${GROUP_ID}/users/${userId}/roles`,
       { roleId: TARGET_ROLE_ID },
       {
         headers: {
@@ -62,6 +56,18 @@ app.post("/promote/:roleName", async (req, res) => {
     console.error("[Promote] Full error:", error.message);
     res.status(500).send("Promotion failed");
   }
+}
+
+app.post("/promote/:roleName", async (req, res) => {
+  const roleName = req.params.roleName.toLowerCase();
+  const userId = req.body.UserId;
+  await promoteUser(roleName, userId, res);
+});
+
+app.get("/promote/:roleName", async (req, res) => {
+  const roleName = req.params.roleName.toLowerCase();
+  const userId = req.query.UserId || req.query.userid || req.query.userId;
+  await promoteUser(roleName, userId, res);
 });
 
 const PORT = process.env.PORT || 3000;
